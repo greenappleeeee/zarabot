@@ -47,8 +47,8 @@ async def check_stock(product):
         found = False
         for btn in buttons:
             try:
-                text = (await btn.inner_text()).strip().lower()
-                if any(keyword in text for keyword in ["sepete ekle", "ekle", "add to cart", "in stock"]):
+                texts = await page.locator("button, div, span, a").all_inner_texts()
+                found = any(any(k in t.lower() for k in ["sepete ekle", "ekle", "add to cart", "in stock"]) for t in texts)
                     found = True
                     break
             except:
