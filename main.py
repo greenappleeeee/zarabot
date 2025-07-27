@@ -1,7 +1,6 @@
 import os
 import json
 import asyncio
-<<<<<<< HEAD
 from playwright.async_api import async_playwright
 import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
