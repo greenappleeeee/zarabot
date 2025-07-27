@@ -41,16 +41,26 @@ async def check_stock(product):
         await page.goto(product["url"], wait_until="networkidle")
         await asyncio.sleep(5)
 
-        try:
-            await page.wait_for_selector("button:has-text('Ekle')", timeout=15000)
-            msg = f"✅ <b>{product['name']}</b> stokta!\n{product['url']}"
-            print(msg)
-            send_telegram_message(msg)
-        except:
-            msg = f"❌ <b>{product['name']}</b> stokta değil veya buton bulunamadı.\n{product['url']}"
-            print(msg)
-            send_telegram_message(msg)
+        # Sayfadaki tüm butonları al
+        buttons = await page.query_selector_all("button")
 
+        found = False
+        for btn in buttons:
+            try:
+                text = (await btn.inner_text()).strip().lower()
+                if any(keyword in text for keyword in ["sepete ekle", "ekle", "add to cart", "in stock"]):
+                    found = True
+                    break
+            except:
+                continue
+
+        if found:
+            msg = f"✅ <b>{product['name']}</b> stokta!\n{product['url']}"
+        else:
+            msg = f"❌ <b>{product['name']}</b> stokta değil.\n{product['url']}"
+
+        print(msg)
+        send_telegram_message(msg)
         await browser.close()
 
 ADD_NAME, ADD_URL = range(2)
