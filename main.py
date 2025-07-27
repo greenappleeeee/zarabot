@@ -25,18 +25,17 @@ async def check_stock():
         await page.goto(URL, wait_until='networkidle')
         await asyncio.sleep(5)  # Sayfanın tam yüklenmesi için bekle
 
-        # Sayfa içeriğini dosyaya kaydet (inceleme için)
         content = await page.content()
         with open("page_source.html", "w", encoding="utf-8") as f:
             f.write(content)
 
-        # Stok butonunu arıyoruz (selector'u ihtiyaca göre değiştirebilirsin)
         try:
             await page.wait_for_selector("button:has-text('Sepete ekle')", timeout=15000)
             print("Ürün stokta.")
             send_telegram_message("Ürün stokta!")
         except:
             print("Ürün stokta değil ya da buton bulunamadı.")
+            send_telegram_message("Ürün stokta değil ya da buton bulunamadı.")
 
         await browser.close()
 
