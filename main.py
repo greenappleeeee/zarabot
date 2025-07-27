@@ -150,7 +150,7 @@ async def main():
         fallbacks=[CommandHandler("iptal", cancel)],
     )
     app.add_handler(add_conv)
-app.add_handler(CommandHandler("durum", status))
+    app.add_handler(CommandHandler("durum", status))
 
     app.add_handler(CommandHandler("sil", delete_start))
     app.add_handler(CallbackQueryHandler(button_handler))
