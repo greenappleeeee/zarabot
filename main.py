@@ -65,6 +65,11 @@ async def check_stock(product):
 
 ADD_NAME, ADD_URL = range(2)
 
+async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    products = load_products()
+    count = len(products)
+    await update.message.reply_text(f"✅ Bot aktif.\n🔍 Takip edilen ürün sayısı: {count}\n🕐 Stoklar 5 dakikada bir kontrol ediliyor.")
+
 async def list_products(update: Update, context: ContextTypes.DEFAULT_TYPE):
     products = load_products()
     if not products:
@@ -145,6 +150,7 @@ async def main():
         fallbacks=[CommandHandler("iptal", cancel)],
     )
     app.add_handler(add_conv)
+app.add_handler(CommandHandler("durum", status))
 
     app.add_handler(CommandHandler("sil", delete_start))
     app.add_handler(CallbackQueryHandler(button_handler))
