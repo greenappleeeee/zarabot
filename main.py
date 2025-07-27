@@ -15,6 +15,10 @@ async def check_stock():
         await page.goto(ZARA_URL)
         await page.wait_for_selector("button:has-text('Ekle')", timeout=10000)
 
+content = await page.content()
+with open("page_source.html", "w", encoding="utf-8") as f:
+    f.write(content)
+    
         button = await page.query_selector("button.product-add-button__button")
         button_text = await button.inner_text()
 
