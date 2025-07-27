@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+<<<<<<< HEAD
 from playwright.async_api import async_playwright
 import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -62,9 +63,51 @@ async def check_stock(product):
 
         print(msg)
         send_telegram_message(msg)
+=======
+import nest_asyncio
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import Update
+from check_stock import periodic_check
+from utils import add_url, remove_url, list_urls, is_valid_url
 
-        await browser.close()
+nest_asyncio.apply()  # Event loop sorunlarını önler
 
+TOKEN = "8190673290:AAE7-xcfdZjvhMfguGYvOrmMxqreZ1C0xIc"
+CHAT_ID = 1207180714
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Merhaba! Zara stok takip botuna hoş geldin.")
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("/ekle [URL] - Ürün ekle\n/sil [URL] - Ürünü sil\n/liste - Takip edilenleri listele")
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.message.text
+    if message.startswith("/ekle"):
+        url = message[6:].strip()
+        if is_valid_url(url):
+            add_url(url)
+            await update.message.reply_text("Ürün eklendi.")
+        else:
+            await update.message.reply_text("Geçerli bir Zara URL'si gir.")
+    elif message.startswith("/sil"):
+        url = message[5:].strip()
+        remove_url(url)
+        await update.message.reply_text("Ürün silindi.")
+    elif message.startswith("/liste"):
+        urls = list_urls()
+        if urls:
+            await update.message.reply_text("\n".join(urls))
+        else:
+            await update.message.reply_text("Takip edilen ürün yok.")
+    else:
+        await update.message.reply_text("Komutu tanımadım. Yardım için /help yaz.")
+>>>>>>> c4c83d4 (Bot main.py ve check_stock entegrasyonu)
+
+async def main():
+    print("Bot çalışıyor...")
+
+<<<<<<< HEAD
 
 ADD_NAME, ADD_URL = range(2)
 
@@ -166,3 +209,22 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
+=======
+    app = Application.builder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    job_queue = app.job_queue
+    job_queue.run_repeating(
+    lambda ctx: asyncio.create_task(periodic_check(chat_id=CHAT_ID, bot=app.bot)),
+    interval=180,
+    first=5
+)
+
+    await app.run_polling(close_loop=False)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+>>>>>>> c4c83d4 (Bot main.py ve check_stock entegrasyonu)
