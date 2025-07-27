@@ -13,10 +13,13 @@ from telegram.ext import (
     filters,
     ConversationHandler,
 )
+import nest_asyncio
+
+nest_asyncio.apply()  # Event loop sorunlarını önler
 
 PRODUCTS_FILE = "products.json"
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN") or "8190673290:AAE7-xcfdZjvhMfguGYvOrmMxqreZ1C0xIc"
+CHAT_ID = int(os.getenv("TELEGRAM_CHAT_ID") or 1207180714)
 
 def load_products():
     try:
@@ -42,73 +45,37 @@ async def check_stock(product):
         await asyncio.sleep(5)
 
         try:
-            # Sayfadaki button, div, span, a etiketlerinin tüm metinlerini al
             texts = await page.locator("button, div, span, a").all_inner_texts()
-
-            # Anahtar kelimelerden herhangi biri metinlerde var mı kontrol et
             found = any(
                 any(keyword in t.lower() for keyword in ["sepete ekle", "ekle", "add to cart", "in stock"])
                 for t in texts
             )
-
         except Exception as e:
             print(f"Stok kontrolünde hata: {e}")
             found = False
 
         if found:
             msg = f"✅ <b>{product['name']}</b> stokta!\n{product['url']}"
+            send_telegram_message(msg)
         else:
             msg = f"❌ <b>{product['name']}</b> stokta değil.\n{product['url']}"
+            print(msg)
 
-        print(msg)
-        send_telegram_message(msg)
-=======
-import nest_asyncio
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from telegram import Update
-from check_stock import periodic_check
-from utils import add_url, remove_url, list_urls, is_valid_url
+async def periodic_check(app):
+    while True:
+        products = load_products()
+        for product in products:
+            await check_stock(product)
+        await asyncio.sleep(300)  # 5 dakika bekle
 
-nest_asyncio.apply()  # Event loop sorunlarını önler
-
-TOKEN = "8190673290:AAE7-xcfdZjvhMfguGYvOrmMxqreZ1C0xIc"
-CHAT_ID = 1207180714
+# Telegram bot komutları ve handlerlar
+ADD_NAME, ADD_URL = range(2)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Merhaba! Zara stok takip botuna hoş geldin.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("/ekle [URL] - Ürün ekle\n/sil [URL] - Ürünü sil\n/liste - Takip edilenleri listele")
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = update.message.text
-    if message.startswith("/ekle"):
-        url = message[6:].strip()
-        if is_valid_url(url):
-            add_url(url)
-            await update.message.reply_text("Ürün eklendi.")
-        else:
-            await update.message.reply_text("Geçerli bir Zara URL'si gir.")
-    elif message.startswith("/sil"):
-        url = message[5:].strip()
-        remove_url(url)
-        await update.message.reply_text("Ürün silindi.")
-    elif message.startswith("/liste"):
-        urls = list_urls()
-        if urls:
-            await update.message.reply_text("\n".join(urls))
-        else:
-            await update.message.reply_text("Takip edilen ürün yok.")
-    else:
-        await update.message.reply_text("Komutu tanımadım. Yardım için /help yaz.")
->>>>>>> c4c83d4 (Bot main.py ve check_stock entegrasyonu)
-
-async def main():
-    print("Bot çalışıyor...")
-
-<<<<<<< HEAD
-
-ADD_NAME, ADD_URL = range(2)
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     products = load_products()
@@ -174,16 +141,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text("Geçersiz seçim.")
 
-async def periodic_check(app):
-    while True:
-        products = load_products()
-        for product in products:
-            await check_stock(product)
-        await asyncio.sleep(300)  # 5 dakika bekle
-
 async def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("durum", status))
     app.add_handler(CommandHandler("liste", list_products))
 
     add_conv = ConversationHandler(
@@ -195,7 +158,6 @@ async def main():
         fallbacks=[CommandHandler("iptal", cancel)],
     )
     app.add_handler(add_conv)
-    app.add_handler(CommandHandler("durum", status))
 
     app.add_handler(CommandHandler("sil", delete_start))
     app.add_handler(CallbackQueryHandler(button_handler))
@@ -206,24 +168,8 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
+    import nest_asyncio
+    nest_asyncio.apply()
+    import asyncio
     asyncio.run(main())
 
-=======
-    app = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    job_queue = app.job_queue
-    job_queue.run_repeating(
-    lambda ctx: asyncio.create_task(periodic_check(chat_id=CHAT_ID, bot=app.bot)),
-    interval=180,
-    first=5
-)
-
-    await app.run_polling(close_loop=False)
-
-if __name__ == "__main__":
-    asyncio.run(main())
->>>>>>> c4c83d4 (Bot main.py ve check_stock entegrasyonu)
