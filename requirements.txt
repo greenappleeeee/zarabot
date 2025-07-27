@@ -1,8 +1,0 @@
-<<<<<<< HEAD
-playwright
-requests
-python-telegram-bot
-=======
-playwright
-requests
->>>>>>> df712be8ea6fcce895b11e2adae2ac419e9f84af
