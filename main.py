@@ -41,18 +41,19 @@ async def check_stock(product):
         await page.goto(product["url"], wait_until="networkidle")
         await asyncio.sleep(5)
 
-        # Sayfadaki tüm butonları al
-        buttons = await page.query_selector_all("button")
+        try:
+            # Sayfadaki button, div, span, a etiketlerinin tüm metinlerini al
+            texts = await page.locator("button, div, span, a").all_inner_texts()
 
-        found = False
-        for btn in buttons:
-            try:
-                texts = await page.locator("button, div, span, a").all_inner_texts()
-                found = any(any(k in t.lower() for k in ["sepete ekle", "ekle", "add to cart", "in stock"]) for t in texts)
-                    found = True
-                    break
-            except:
-                continue
+            # Anahtar kelimelerden herhangi biri metinlerde var mı kontrol et
+            found = any(
+                any(keyword in t.lower() for keyword in ["sepete ekle", "ekle", "add to cart", "in stock"])
+                for t in texts
+            )
+
+        except Exception as e:
+            print(f"Stok kontrolünde hata: {e}")
+            found = False
 
         if found:
             msg = f"✅ <b>{product['name']}</b> stokta!\n{product['url']}"
@@ -61,7 +62,9 @@ async def check_stock(product):
 
         print(msg)
         send_telegram_message(msg)
+
         await browser.close()
+
 
 ADD_NAME, ADD_URL = range(2)
 
